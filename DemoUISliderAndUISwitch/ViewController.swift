@@ -9,14 +9,15 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController {
-
+class ViewController: UIViewController, AVAudioPlayerDelegate {
+    @IBOutlet weak var switchRepeat: UISwitch!
+    
     
     @IBOutlet weak var sliderVolume: UISlider!
     @IBOutlet weak var sliderTime: UISlider!
     
-    var repeatAudio: Bool = false
-    var play: Bool = false
+    
+    
     var bombSoundEffect: AVAudioPlayer?
     let playImage: UIImage = UIImage(named: "play.png")!
     let pauseImage: UIImage = UIImage(named: "pause.png")!
@@ -38,6 +39,15 @@ class ViewController: UIViewController {
         
     }
     
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer,
+                                     successfully flag: Bool){
+        
+        let isRepeat = switchRepeat.isOn
+        if(!isRepeat){
+            buttonPlay.setBackgroundImage(playImage, for: .normal)
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -46,6 +56,8 @@ class ViewController: UIViewController {
         
         do{
             bombSoundEffect = try AVAudioPlayer(contentsOf: url)
+            bombSoundEffect?.numberOfLoops = 0
+            bombSoundEffect?.delegate = self;
             
             let audioDuration = bombSoundEffect?.duration ?? 0
             
@@ -74,13 +86,11 @@ class ViewController: UIViewController {
     }
 
     @IBAction func actionAudioRepeat(_ sender: UISwitch) {
-        
         if(sender.isOn){
-            repeatAudio = true
+            bombSoundEffect?.numberOfLoops = -1
         }else{
-            repeatAudio = false
+            bombSoundEffect?.numberOfLoops = 0
         }
-        
     }
     
     @objc func updateCurrentAudioTime(){
@@ -92,19 +102,19 @@ class ViewController: UIViewController {
         let timeLeftEnd = Float(audioDuration) - Float(audioCurrentTime)
         endAudioTime.text = self.stringFromTimeInterval(interval: TimeInterval(timeLeftEnd))
         
-        if(Int(audioCurrentTime) == Int(audioDuration)){
-            if(repeatAudio){
-                play = true
-                buttonPlay.setBackgroundImage(pauseImage, for: .normal)
-                
-                self.delayWithSeconds(1) {
-                    self.bombSoundEffect?.play()
-                }
-            }else{
-                buttonPlay.setBackgroundImage(playImage, for: .normal)
-                play = false
-            }
-        }
+//        if(Int(audioCurrentTime) == Int(audioDuration)){
+//            if(repeatAudio){
+//
+//                buttonPlay.setBackgroundImage(pauseImage, for: .normal)
+//
+//                self.delayWithSeconds(1) {
+//                    self.bombSoundEffect?.play()
+//                }
+//            }else{
+//                buttonPlay.setBackgroundImage(playImage, for: .normal)
+//
+//            }
+//        }
         
     }
     
@@ -115,8 +125,9 @@ class ViewController: UIViewController {
     }
     
     @IBAction func actionPlayPause(_ sender: UIButton) {
-        play = !play
-        if(play){
+        
+        let isPlaying = bombSoundEffect?.isPlaying
+        if(!(isPlaying)!){
             bombSoundEffect?.play()
             sender.setBackgroundImage(pauseImage, for: .normal)
             
